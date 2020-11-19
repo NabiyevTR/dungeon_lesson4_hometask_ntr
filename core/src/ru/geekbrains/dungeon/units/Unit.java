@@ -15,6 +15,7 @@ public abstract class Unit {
     int damage;
     int defence;
     int hp;
+    int maxAttackRadius;
     int hpMax;
     int cellX;
     int cellY;

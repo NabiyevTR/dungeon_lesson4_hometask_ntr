@@ -1,7 +1,5 @@
 package ru.geekbrains.dungeon.units;
 
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import ru.geekbrains.dungeon.GameController;
 
@@ -14,6 +12,7 @@ public class Monster extends Unit {
         this.texture = atlas.findRegion("monster");
         this.textureHp = atlas.findRegion("hp");
         this.hp = -1;
+        this.maxAttackRadius = 5;
     }
 
     public void activate(int cellX, int cellY) {
@@ -37,13 +36,18 @@ public class Monster extends Unit {
                 if (canIAttackThisTarget(target)) {
                     attack(target);
                 } else {
-                    tryToMove();
+                    if (isAttackMode()) {
+                        tryToMoveAttackMode();
+                    } else {
+                        tryToMoveRandomMode();
+                    }
                 }
             }
         }
     }
 
-    public void tryToMove() {
+
+    public void tryToMoveAttackMode() {
         int bestX = -1, bestY = -1;
         float bestDst = 10000;
         for (int i = cellX - 1; i <= cellX + 1; i++) {
@@ -60,4 +64,37 @@ public class Monster extends Unit {
         }
         goTo(bestX, bestY);
     }
+
+    // 2. Монстры охотятся за героем, только если он находится в радиусе N клеток (пусть 5),
+    // в противном случае, бегают на случайную клетку
+    public void tryToMoveRandomMode() {
+        int bestX = -1, bestY = -1;
+        float randomValue;
+        float randomTemp = -1;
+        for (int i = cellX - 1; i <= cellX + 1; i++) {
+            for (int j = cellY - 1; j <= cellY + 1; j++) {
+                if (Math.abs(cellX - i) + Math.abs(cellY - j) == 1 && gc.getGameMap().isCellPassable(i, j) && gc.getUnitController().isCellFree(i, j)) {
+                    randomValue = (float) Math.random();
+                    if (randomValue > randomTemp) {
+                        randomTemp = randomValue;
+                        bestX = i;
+                        bestY = j;
+                    }
+                }
+            }
+        }
+        goTo(bestX, bestY);
+    }
+
+
+    public boolean isAttackMode() {
+        float dst = (float) Math.sqrt((cellX - target.getCellX()) *
+                (cellX - target.getCellX()) + (cellY - target.getCellY()) * (cellY - target.getCellY()));
+        if (dst <= maxAttackRadius) {
+            return true;
+        }
+        return false;
+    }
+
+
 }
